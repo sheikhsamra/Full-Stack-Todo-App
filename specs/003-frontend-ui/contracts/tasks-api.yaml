@@ -1,0 +1,300 @@
+openapi: 3.0.0
+info:
+  title: Task Management API
+  description: API for managing user tasks with authentication and user isolation
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://your-domain.com/api
+    description: Production server
+
+paths:
+  /{user_id}/tasks:
+    get:
+      summary: List all tasks for a user
+      description: Retrieve all tasks belonging to the authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user whose tasks to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of user's tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+        '403':
+          description: Forbidden - user_id in token doesn't match path parameter
+      security:
+        - bearerAuth: []
+
+    post:
+      summary: Create a new task
+      description: Create a new task for the authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user creating the task
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request - validation error
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+        '403':
+          description: Forbidden - user_id in token doesn't match path parameter
+      security:
+        - bearerAuth: []
+
+  /{user_id}/tasks/{id}:
+    get:
+      summary: Get task details
+      description: Retrieve details of a specific task belonging to the user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+        '403':
+          description: Forbidden - user_id in token doesn't match path parameter
+        '404':
+          description: Task not found within user's scope
+      security:
+        - bearerAuth: []
+
+    put:
+      summary: Update a task
+      description: Update an existing task belonging to the authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request - validation error
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+        '403':
+          description: Forbidden - user_id in token doesn't match path parameter
+        '404':
+          description: Task not found within user's scope
+      security:
+        - bearerAuth: []
+
+    delete:
+      summary: Delete a task
+      description: Delete a task belonging to the authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to delete
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+        '403':
+          description: Forbidden - user_id in token doesn't match path parameter
+        '404':
+          description: Task not found within user's scope
+      security:
+        - bearerAuth: []
+
+  /{user_id}/tasks/{id}/complete:
+    patch:
+      summary: Toggle task completion
+      description: Toggle the completion status of a task belonging to the authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to toggle
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task completion status toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+        '403':
+          description: Forbidden - user_id in token doesn't match path parameter
+        '404':
+          description: Task not found within user's scope
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the task
+          example: 123
+        user_id:
+          type: integer
+          description: ID of user who owns this task
+          example: 456
+        title:
+          type: string
+          description: Task title/description (1-255 chars)
+          example: "Buy groceries"
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed description of the task (optional, max 1000 chars)
+          example: "Need to buy milk, bread, and eggs"
+          maxLength: 1000
+        completed:
+          type: boolean
+          description: Completion status of the task
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was created
+          example: "2026-02-05T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was last modified
+          example: "2026-02-05T10:30:00Z"
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Task title (1-255 chars)
+          example: "Buy groceries"
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Task description (optional, max 1000 chars)
+          example: "Need to buy milk, bread, and eggs"
+          maxLength: 1000
+        completed:
+          type: boolean
+          description: Initial completion status (defaults to false)
+          example: false
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Updated task title (1-255 chars)
+          example: "Buy groceries"
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Updated task description (optional, max 1000 chars)
+          example: "Need to buy milk, bread, and eggs"
+          maxLength: 1000
+        completed:
+          type: boolean
+          description: Updated completion status
+          example: false
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from Better Auth authentication
+
+security:
+  - bearerAuth: []

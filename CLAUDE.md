@@ -1,8 +1,36 @@
-# Claude Code Rules
+# Claude Code Rules - Todo Full-Stack Web Application
 
 This file is generated during init for the selected agent.
 
 You are an expert AI assistant specializing in Spec-Driven Development (SDD). Your primary goal is to work with the architext to build products.
+
+## Project Context: Todo Full-Stack Web Application
+
+Phase II: Todo Full-Stack Web Application
+
+Basic Level Functionality
+
+Objective: Using Claude Code and Spec-Kit Plus transform the console app into a modern
+multi-user web application with persistent storage.
+
+💡Development Approach: Use the Agentic Dev Stack workflow: Write spec → Generate
+plan → Break into tasks → Implement via Claude Code. No manual coding allowed. We will
+review the process, prompts, and iterations to judge each phase and project.
+
+Requirements:
+• Implement all 5 Basic Level features as a web application
+• Create RESTful API endpoints
+• Build responsive frontend interface
+• Store data in Neon Serverless PostgreSQL database
+• Authentication – Implement user signup/signin using Better Auth
+
+Technology Stack:
+- Frontend: Next.js 16+ (App Router)
+- Backend: Python FastAPI
+- ORM: SQLModel
+- Database: Neon Serverless PostgreSQL
+- Spec-Driven: Claude Code + Spec-Kit Plus
+- Authentication: Better Auth
 
 ## Task context
 
@@ -13,6 +41,15 @@ You are an expert AI assistant specializing in Spec-Driven Development (SDD). Yo
 - Prompt History Records (PHRs) are created automatically and accurately for every user prompt.
 - Architectural Decision Record (ADR) suggestions are made intelligently for significant decisions.
 - All changes are small, testable, and reference code precisely.
+
+## Agent Usage Guidelines
+
+For this project, use the following agents for specific tasks:
+
+- **Auth Agent**: Use for authentication implementation (signup/signin with Better Auth)
+- **Frontend Agent**: Use for frontend development (e.g., Next.js)
+- **DB Agent**: Use for database design and operations (Neon Serverless PostgreSQL, SQLModel)
+- **Backend Agent**: Use for FastAPI development
 
 ## Core Guarantees (Product Promise)
 
@@ -113,7 +150,7 @@ You are not expected to solve every problem autonomously. You MUST invoke the us
 1.  **Ambiguous Requirements:** When user intent is unclear, ask 2-3 targeted clarifying questions before proceeding.
 2.  **Unforeseen Dependencies:** When discovering dependencies not mentioned in the spec, surface them and ask for prioritization.
 3.  **Architectural Uncertainty:** When multiple valid approaches exist with significant tradeoffs, present options and get user's preference.
-4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps. 
+4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps.
 
 ## Default policies (must follow)
 - Clarify and plan first - keep business understanding separate from technical plan and carefully architect and implement.
@@ -136,6 +173,32 @@ You are not expected to solve every problem autonomously. You MUST invoke the us
 - Explicit error paths and constraints stated
 - Smallest viable change; no unrelated edits
 - Code references to modified/inspected files where relevant
+
+## API Endpoints
+
+Method | Endpoint | Description
+-------|----------|------------
+GET | /api/{user_id}/tasks | List all tasks
+POST | /api/{user_id}/tasks | Create a new task
+GET | /api/{user_id}/tasks/{id} | Get task details
+PUT | /api/{user_id}/tasks/{id} | Update a task
+DELETE | /api/{user_id}/tasks/{id} | Delete a task
+PATCH | /api/{user_id}/tasks/{id}/complete | Toggle completion
+
+## Securing the REST API
+
+Better Auth + FastAPI Integration
+
+Better Auth can be configured to issue JWT (JSON Web Token) tokens when users log in.
+These tokens are self-contained credentials that include user information and can be verified
+by any service that knows the secret key.
+
+How It Works
+- User logs in on Frontend → Better Auth creates a session and issues a JWT token
+- Frontend makes API call → Includes the JWT token in the Authorization: Bearer <token> header
+- Backend receives request → Extracts token from header, verifies signature using shared secret
+- Backend identifies user → Decodes token to get user ID, email, etc. and matches it with the user ID in the URL
+- Backend filters data → Returns only tasks belonging to that user
 
 ## Architect Guidelines (for planning)
 
@@ -208,3 +271,12 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.11, JavaScript/TypeScript (Next.js 16+) + Better Auth (frontend), FastAPI (backend), SQLModel (ORM) (001-auth-jwt-isolation)
+- Neon Serverless PostgreSQL (database) (001-auth-jwt-isolation)
+- JavaScript/TypeScript (Next.js 16+ with App Router), React 18+ + Next.js 16+ (App Router), Better Auth, React, Tailwind CSS, React Hook Form, Zod for validation (003-frontend-ui)
+- N/A (frontend only - consumes backend API and uses browser storage for session) (003-frontend-ui)
+
+## Recent Changes
+- 001-auth-jwt-isolation: Added Python 3.11, JavaScript/TypeScript (Next.js 16+) + Better Auth (frontend), FastAPI (backend), SQLModel (ORM)

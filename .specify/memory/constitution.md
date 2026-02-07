@@ -1,55 +1,62 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- SYNC IMPACT REPORT
+Version change: N/A (initial version) → 1.0.0
+Modified principles: N/A
+Added sections: All principles and sections (initial constitution)
+Removed sections: N/A
+Templates requiring updates:
+- .specify/templates/plan-template.md ⚠ pending
+- .specify/templates/spec-template.md ⚠ pending
+- .specify/templates/tasks-template.md ⚠ pending
+- .specify/templates/commands/*.md ⚠ pending
+Follow-up TODOs: None
+-->
+# Todo Full-Stack Web Application Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### Spec-Driven Execution Only
+Spec-driven execution only: Spec → Plan → Tasks → Implement via Claude Code (no manual coding). All development must follow the agentic dev stack workflow using Claude Code and Spec-Kit Plus, with no manual coding allowed.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### Security-First
+Security-first: every operation must be authenticated and user-isolated. All API endpoints require valid JWT authentication and must enforce strict user isolation, returning only data belonging to the authenticated user.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### Correctness Over Convenience
+Correctness over convenience: API behavior must match requirements exactly. All REST endpoints must follow the specified contract with consistent status codes and error responses, ensuring predictable behavior.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### Maintainability
+Maintainability: clean separation between Next.js frontend and FastAPI backend. Services must be independently deployable with clear API contracts and well-defined responsibilities.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### Reliability
+Reliability: predictable errors, consistent status codes, and stable interfaces. All API endpoints must return standardized HTTP status codes with consistent error message formats.
 
-### [PRINCIPLE_6_NAME]
+## API and Security Standards
+All REST endpoints are protected and require `Authorization: Bearer <JWT>`. Authentication model: Better Auth (Next.js) issues JWT; FastAPI verifies JWT using shared secret. User isolation: backend must only return/modify tasks belonging to authenticated user. Ownership enforcement: token user must match `{user_id}` in the URL; reject mismatch with appropriate status code.
 
+RESTful consistency:
+- 200/201 for success
+- 400 for validation errors
+- 401 for missing/invalid/expired token
+- 403 for user_id mismatch / forbidden access
+- 404 when task not found within user scope
 
-[PRINCIPLE__DESCRIPTION]
+## Development Workflow
+Development must follow the Spec → Plan → Tasks → Implement workflow using Claude Code and Spec-Kit Plus tools. Only Claude Code + Spec-Kit Plus workflow is permitted, with no manual coding. Each layer must use the designated technologies:
+- Frontend: Next.js 16+ (App Router)
+- Backend: Python FastAPI
+- ORM: SQLModel
+- Database: Neon Serverless PostgreSQL
+- Authentication: Better Auth (frontend) + JWT verification (backend)
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+Required API endpoints must be implemented as specified:
+- GET    /api/{user_id}/tasks
+- POST   /api/{user_id}/tasks
+- GET    /api/{user_id}/tasks/{id}
+- PUT    /api/{user_id}/tasks/{id}
+- DELETE /api/{user_id}/tasks/{id}
+- PATCH  /api/{user_id}/tasks/{id}/complete
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Constitution governs all development activities for the Todo Full-Stack Web Application. All code must comply with these principles. Amendments require explicit documentation and approval via the Spec-Kit Plus workflow. Development teams must verify compliance with all principles during reviews and testing. The constitution supersedes all other practices and guidelines.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-02-05 | **Last Amended**: 2026-02-05
