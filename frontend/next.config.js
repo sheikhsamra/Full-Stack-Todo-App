@@ -4,7 +4,7 @@ const nextConfig = {
     typedRoutes: true,
   },
   images: {
-    domains: ['localhost', 'your-backend-domain.com'], // Add your backend domain here
+    domains: ['/', 'your-backend-domain.com'], // Add your backend domain here
   },
 };
 

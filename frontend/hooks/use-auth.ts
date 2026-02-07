@@ -65,16 +65,25 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (error: any) {
       console.error('Sign in error:', error);
-      return { success: false, error: error.response?.data?.detail || 'Login failed' };
+      // Extract error message from different possible sources
+      let errorMessage = 'Login failed';
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      return { success: false, error: errorMessage };
     }
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
     try {
-      const response = await registerUser({ 
+      const response = await registerUser({
         name: name || email.split('@')[0], // Use part of email as name if not provided
-        email, 
-        password 
+        email,
+        password
       });
       setUser({
         id: response.user_id,
@@ -84,7 +93,16 @@ export const useAuth = () => {
       return { success: true, data: response };
     } catch (error: any) {
       console.error('Sign up error:', error);
-      return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+      // Extract error message from different possible sources
+      let errorMessage = 'Registration failed';
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      return { success: false, error: errorMessage };
     }
   };
 

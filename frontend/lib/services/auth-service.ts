@@ -39,28 +39,54 @@ export const registerUser = async (userData: UserRegistrationData): Promise<Auth
     const localStorage = getLocalStorage();
     localStorage.setItem('auth_token', response.data.access_token);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
-    throw error;
+    // Return more detailed error information
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+      throw new Error(error.response.data.detail || error.response.data.message || 'Registration failed');
+    } else if (error.request) {
+      console.error('Error request:', error.request);
+      throw new Error('Network error: Unable to reach the server');
+    } else {
+      console.error('Error message:', error.message);
+      throw new Error(error.message || 'Registration failed');
+    }
   }
 };
 
 // Login user
 export const loginUser = async (loginData: UserLoginData): Promise<AuthResponse> => {
   try {
-    const response = await apiClient.post('/auth/login', {}, {
-      auth: {
+    // Login with form data (the backend expects OAuth2PasswordRequestForm format)
+    const response = await apiClient.post('/auth/login', 
+      new URLSearchParams({
         username: loginData.username,
         password: loginData.password
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
       }
-    });
+    );
     // Store the token in localStorage
     const localStorage = getLocalStorage();
     localStorage.setItem('auth_token', response.data.access_token);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    throw error;
+    // Return more detailed error information
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+      throw new Error(error.response.data.detail || error.response.data.message || 'Login failed');
+    } else if (error.request) {
+      console.error('Error request:', error.request);
+      throw new Error('Network error: Unable to reach the server');
+    } else {
+      console.error('Error message:', error.message);
+      throw new Error(error.message || 'Login failed');
+    }
   }
 };
 
