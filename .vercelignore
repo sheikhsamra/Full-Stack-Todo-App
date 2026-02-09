@@ -1,0 +1,9 @@
+backend/
+specs/
+history/
+.claude/
+.gemini/
+.specify/
+shared/
+verify_implementation.py
+package.json.backup
