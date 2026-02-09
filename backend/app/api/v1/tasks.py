@@ -4,7 +4,7 @@ from typing import List
 from ...database import get_session
 from ...models.task import Task, TaskCreate, TaskPublic, TaskUpdate
 from ...api.deps import get_current_user_id, verify_user_owns_resource
-from datetime import datetime
+from datetime import datetime, UTC
 
 router = APIRouter()
 
@@ -109,7 +109,7 @@ def update_task(
     # Update the task with the provided values
     update_data = task_update.model_dump(exclude_unset=True)
     db_task.sqlmodel_update(update_data)
-    db_task.updated_at = datetime.utcnow()
+    db_task.updated_at = datetime.now(UTC)
 
     db_session.add(db_task)
     db_session.commit()
@@ -177,7 +177,7 @@ def toggle_task_completion(
 
     # Toggle the completion status
     db_task.completed = not db_task.completed
-    db_task.updated_at = datetime.utcnow()
+    db_task.updated_at = datetime.now(UTC)
 
     db_session.add(db_task)
     db_session.commit()

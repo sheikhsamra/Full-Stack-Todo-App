@@ -1,23 +1,24 @@
-from pydantic_settings import BaseSettings
-from typing import Optional
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """
-    Application settings loaded from environment variables.
-    """
-    better_auth_secret: str = os.getenv("BETTER_AUTH_SECRET", "fallback-secret-key-change-in-production")
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./todo_app.db")
-    api_v1_prefix: str = "/api/v1"
-    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
+    # Database
+    database_url: str
 
-    class Config:
-        env_file = ".env"
+    # JWT
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
+    # App
+    debug: bool = False
+    api_v1_prefix: str = "/api/v1"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",          # ✅ prevents crash if extra vars exist
+        case_sensitive=False,
+    )
 
 
 settings = Settings()

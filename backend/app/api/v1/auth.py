@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer
 from sqlmodel import Session, select
 from datetime import timedelta
 from typing import Dict, Any
 from ...database import get_session
-from ...models.user import User, UserCreate, UserRead, UserLogin
-from ...core.security import create_access_token
+from ...models.user import User, UserCreate, UserRead, UserLogin, pwd_context
+from ...core.security import create_access_token, decode_token_user_id
 from ...core.config import settings
 
 router = APIRouter()
@@ -15,23 +15,38 @@ def register_user(user_data: UserCreate, db_session: Session = Depends(get_sessi
     """
     Register a new user.
     """
-    # Check if user already exists
-    existing_user = db_session.exec(select(User).where(User.email == user_data.email)).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with this email already exists"
+    try:
+        # Check if user already exists
+        existing_user = db_session.exec(select(User).where(User.email == user_data.email)).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with this email already exists"
+            )
+
+        # Hash the password
+        hashed_password = pwd_context.hash(user_data.password)
+
+        # Create new user with hashed password
+        user = User(
+            email=user_data.email,
+            name=user_data.name,
+            hashed_password=hashed_password
         )
-    
-    # Create new user
-    user = User.model_validate(user_data, update={"hashed_password": user_data.password})
-    user.hashed_password = user.get_hashed_password(user_data.password)
-    
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
-    
-    return user
+
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
+
+        return user
+    except Exception as e:
+        print(f"Registration error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
 
 
 @router.post("/auth/login")
@@ -60,3 +75,38 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db_session: Ses
         "user_id": user.id,
         "email": user.email
     }
+
+
+@router.get("/auth/users/me", response_model=UserRead)
+def get_current_user(
+    token: str = Depends(HTTPBearer()),
+    db_session: Session = Depends(get_session)
+):
+    """
+    Get current authenticated user.
+    """
+    try:
+        # Decode the token to get user ID
+        user_id = decode_token_user_id(token.credentials)
+        
+        # Fetch user from database
+        user = db_session.exec(select(User).where(User.id == user_id)).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        return user
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        print(f"Get current user error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

@@ -25,7 +25,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         # Decode and verify the token
         payload = verify_token(credentials.credentials)
 
-        user_id = payload.get("user_id")
+        user_id = payload.get("sub")  # Token uses "sub" field for user ID
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,7 +60,7 @@ def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depend
         # Decode and verify the token
         payload = verify_token(credentials.credentials)
 
-        user_id = payload.get("user_id")
+        user_id = payload.get("sub")  # Token uses "sub" field for user ID
         if user_id is None:
             return None
 

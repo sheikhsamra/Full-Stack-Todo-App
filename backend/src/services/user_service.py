@@ -3,6 +3,9 @@ from typing import Optional
 from passlib.context import CryptContext
 from ..models.user import User, UserCreate, UserUpdate
 from fastapi import HTTPException, status
+from datetime import datetime, timedelta
+from ..config import settings
+from ..utils.jwt_utils import verify_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -41,9 +44,10 @@ class UserService:
 
         # Create the user instance
         db_user = User(
+            name=user_create.name,
             email=user_create.email,
-            password_hash=password_hash,
-            is_active=user_create.is_active if hasattr(user_create, 'is_active') else True
+            hashed_password=password_hash,
+            is_active=True # Default to active for new users
         )
 
         # Add to session and commit
@@ -89,7 +93,7 @@ class UserService:
             return None
 
         # Update fields if provided
-        update_data = user_update.dict(exclude_unset=True)
+        update_data = user_update.model_dump(exclude_unset=True)
         if "password" in update_data:
             update_data["password_hash"] = self.get_password_hash(update_data.pop("password"))
 
@@ -112,3 +116,27 @@ class UserService:
         session.delete(db_user)
         session.commit()
         return True
+
+    def get_current_user(self, token: str, session: Session) -> User:
+        """
+        Get current user from JWT token.
+        """
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+        try:
+            payload = verify_token(token)
+            user_id: str = payload.get("sub")  # Token uses "sub" field for user ID
+            if user_id is None:
+                raise credentials_exception
+        except HTTPException:
+            raise credentials_exception
+        
+        user = self.get_user_by_id(session=session, user_id=int(user_id))
+        if user is None:
+            raise credentials_exception
+        
+        return user

@@ -11,10 +11,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set. Please configure your .env file.")
 
-# Ensure we're using psycopg3 driver for PostgreSQL
+# Ensure we're using psycopg3 driver
 if DATABASE_URL.startswith("postgresql://"):
     # Convert to psycopg3 format if needed
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
+# Ensure SSL mode is properly configured for Neon
+if "sslmode=" not in DATABASE_URL:
+    DATABASE_URL += "?sslmode=require"
 
 # Create the engine with connection pooling settings
 engine = create_engine(

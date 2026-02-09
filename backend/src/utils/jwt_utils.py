@@ -18,11 +18,11 @@ def validate_jwt_signature(token: str, secret_key: str = None) -> bool:
         True if the signature is valid, False otherwise
     """
     if secret_key is None:
-        secret_key = settings.better_auth_secret
+        secret_key = settings.secret_key
 
     try:
         # This will raise an exception if the signature is invalid
-        jwt.decode(token, secret_key, algorithms=["HS256"])
+        jwt.decode(token, secret_key, algorithms=[settings.algorithm])
         return True
     except JWTError:
         return False
@@ -34,24 +34,24 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 
     Args:
         data: Dictionary containing the claims to be included in the token
-        expires_delta: Optional timedelta for token expiration (defaults to 30 minutes)
+        expires_delta: Optional timedelta for token expiration (defaults to settings.access_token_expire_minutes)
 
     Returns:
         Encoded JWT token as a string
     """
     to_encode = data.copy()
 
-    # Set default expiration if not provided (30 minutes)
+    # Set default expiration if not provided
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=30)
+        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
 
     # Add expiration time to the token
     to_encode.update({"exp": expire})
 
-    # Encode the token with the secret and HS256 algorithm
-    encoded_jwt = jwt.encode(to_encode, settings.better_auth_secret, algorithm="HS256")
+    # Encode the token with the secret and algorithm from settings
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
 
@@ -66,8 +66,8 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
         Decoded token claims if valid, None otherwise
     """
     try:
-        # Decode the token with the secret
-        payload = jwt.decode(token, settings.better_auth_secret, algorithms=["HS256"])
+        # Decode the token with the secret and algorithm from settings
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
 
         # Extract user_id from the token (using 'sub' claim as user_id by convention)
         user_id: str = payload.get("sub")

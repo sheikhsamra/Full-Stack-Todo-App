@@ -1,126 +1,123 @@
-// auth-service.ts
-import apiClient from './auth-api';
+// lib/services/auth-service.ts
+import apiClient from "./auth-api";
 
-interface UserRegistrationData {
+export interface UserRegistrationData {
   name: string;
   email: string;
   password: string;
 }
 
-interface UserLoginData {
-  username: string; // email
+export interface UserLoginData {
+  username: string;
   password: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   access_token: string;
   token_type: string;
-  user_id: number;
-  email: string;
+  user_id?: number;
+  email?: string;
 }
 
-// Helper function to safely access localStorage
+const TOKEN_KEY = "auth_token";
+
+// SSR-safe localStorage
 const getLocalStorage = () => {
-  if (typeof window !== 'undefined') {
-    return window.localStorage;
-  }
+  if (typeof window !== "undefined") return window.localStorage;
   return {
     getItem: () => null,
     setItem: () => {},
-    removeItem: () => {}
+    removeItem: () => {},
   };
 };
 
-// Register a new user
-export const registerUser = async (userData: UserRegistrationData): Promise<AuthResponse> => {
+// ✅ SINGLE source of truth
+const AUTH_PREFIX = "/api/auth";
+
+// ---------------- REGISTER ----------------
+export const registerUser = async (
+  userData: UserRegistrationData
+): Promise<AuthResponse> => {
   try {
-    const response = await apiClient.post('/auth/register', userData);
-    // Store the token in localStorage
+    const response = await apiClient.post(
+      `${AUTH_PREFIX}/register`,
+      userData
+    );
+
     const localStorage = getLocalStorage();
-    localStorage.setItem('auth_token', response.data.access_token);
+    if (response?.data?.access_token) {
+      localStorage.setItem(TOKEN_KEY, response.data.access_token);
+    }
+
     return response.data;
   } catch (error: any) {
-    console.error('Registration error:', error);
-    // Return more detailed error information
+    console.error("Registration error:", error);
     if (error.response) {
-      console.error('Error response:', error.response.data);
-      throw new Error(error.response.data.detail || error.response.data.message || 'Registration failed');
-    } else if (error.request) {
-      console.error('Error request:', error.request);
-      throw new Error('Network error: Unable to reach the server');
-    } else {
-      console.error('Error message:', error.message);
-      throw new Error(error.message || 'Registration failed');
+      throw new Error(
+        error.response.data?.detail ||
+        error.response.data?.message ||
+        "Registration failed"
+      );
     }
+    throw new Error("Network error: Unable to reach the server");
   }
 };
 
-// Login user
-export const loginUser = async (loginData: UserLoginData): Promise<AuthResponse> => {
+// ---------------- LOGIN ----------------
+export const loginUser = async (
+  loginData: UserLoginData
+): Promise<AuthResponse> => {
   try {
-    // Login with form data (the backend expects OAuth2PasswordRequestForm format)
-    const response = await apiClient.post('/auth/login', 
+    const response = await apiClient.post(
+      `${AUTH_PREFIX}/login`,
       new URLSearchParams({
         username: loginData.username,
-        password: loginData.password
+        password: loginData.password,
       }),
       {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       }
     );
-    // Store the token in localStorage
+
     const localStorage = getLocalStorage();
-    localStorage.setItem('auth_token', response.data.access_token);
+    if (response?.data?.access_token) {
+      localStorage.setItem(TOKEN_KEY, response.data.access_token);
+    }
+
     return response.data;
   } catch (error: any) {
-    console.error('Login error:', error);
-    // Return more detailed error information
+    console.error("Login error:", error);
     if (error.response) {
-      console.error('Error response:', error.response.data);
-      throw new Error(error.response.data.detail || error.response.data.message || 'Login failed');
-    } else if (error.request) {
-      console.error('Error request:', error.request);
-      throw new Error('Network error: Unable to reach the server');
-    } else {
-      console.error('Error message:', error.message);
-      throw new Error(error.message || 'Login failed');
+      throw new Error(
+        error.response.data?.detail ||
+        error.response.data?.message ||
+        "Login failed"
+      );
     }
+    throw new Error("Network error: Unable to reach the server");
   }
 };
 
-// Get current user info (using the token)
+// ---------------- CURRENT USER ----------------
 export const getCurrentUser = async (): Promise<any> => {
-  try {
-    // Since we don't have a /me endpoint, we'll decode the token or make a request to a protected endpoint
-    const localStorage = getLocalStorage();
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    
-    // For now, we'll just return the token payload by decoding it
-    // In a real implementation, you'd have a /me endpoint on the backend
-    const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-    return {
-      id: tokenPayload.sub,
-      email: tokenPayload.email || 'unknown@example.com', // This would come from the backend
-    };
-  } catch (error) {
-    console.error('Get current user error:', error);
-    throw error;
-  }
+  const localStorage = getLocalStorage();
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  if (!token) throw new Error("No authentication token found");
+
+  const res = await apiClient.get(`${AUTH_PREFIX}/users/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
 };
 
-// Logout user
+// ---------------- LOGOUT ----------------
 export const logoutUser = async (): Promise<void> => {
-  try {
-    // Remove the token from localStorage
-    const localStorage = getLocalStorage();
-    localStorage.removeItem('auth_token');
-  } catch (error) {
-    console.error('Logout error:', error);
-    throw error;
-  }
+  const localStorage = getLocalStorage();
+  localStorage.removeItem(TOKEN_KEY);
 };

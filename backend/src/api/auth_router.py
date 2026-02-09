@@ -1,129 +1,68 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer
-from sqlmodel import Session
-from datetime import timedelta
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Dict, Any
+from sqlmodel import Session
+from pydantic import BaseModel
+from datetime import timedelta
+
+from ..models.user import UserRead, UserCreate
 from ..services.user_service import UserService
-from ..models.user import UserCreate, UserRead
-from ..db import get_session
-from ..utils.jwt_utils import create_access_token, create_user_token_payload
-from ..config import settings
+from ..database import get_session
+from ..app.core.security import create_access_token
+from ..app.core.config import settings
 
+router = APIRouter()
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
-security = HTTPBearer()
-user_service = UserService()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
-
-@router.post("/signup", response_model=UserRead)
-def register_user(user_create: UserCreate, session: Session = Depends(get_session)) -> UserRead:
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: Session = Depends(get_session)
+) -> UserRead:
     """
-    Register a new user with email and password.
-
-    Args:
-        user_create: User creation data containing email and password
-        session: Database session dependency
-
-    Returns:
-        UserRead: Created user data (without password)
-
-    Raises:
-        HTTPException: If user with email already exists
+    Dependency to get current user from JWT token.
     """
-    try:
-        # Create the user using the user service
-        db_user = user_service.create_user(session=session, user_create=user_create)
+    user_service = UserService()
+    return user_service.get_current_user(token, session)
 
-        # Return user data (without password)
-        return UserRead(
-            id=db_user.id,
-            email=db_user.email,
-            is_active=db_user.is_active,
-            created_at=db_user.created_at,
-            updated_at=db_user.updated_at
-        )
-    except HTTPException:
-        # Re-raise HTTP exceptions from the service
-        raise
-    except Exception as e:
-        # Handle any other errors
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+@router.post("/register", response_model=UserRead)
+def register_user(
+    user_create: UserCreate,
+    session: Session = Depends(get_session)
+):
+    user_service = UserService() # Instantiate UserService without session initially
+    db_user = user_service.get_user_by_email(session=session, email=user_create.email)
+    if db_user:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during user registration"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
         )
+    new_user = user_service.create_user(session=session, user_create=user_create)
+    return new_user
 
-
-@router.post("/login")
-def login_user(email: str, password: str, session: Session = Depends(get_session)) -> Dict[str, Any]:
-    """
-    Authenticate user with email and password and return JWT token.
-
-    Args:
-        email: User's email address
-        password: User's password
-        session: Database session dependency
-
-    Returns:
-        Dict: Contains access token and token type
-
-    Raises:
-        HTTPException: If authentication fails
-    """
-    # Authenticate the user using the user service
-    user = user_service.authenticate_user(session=session, email=email, password=password)
-
+@router.post("/token", response_model=Token)
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session)
+):
+    user_service = UserService() # Instantiate UserService without session initially
+    user = user_service.authenticate_user(session=session, email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    # Create a payload for the token
-    token_payload = create_user_token_payload(user.id, user.email)
-
-    # Create access token with a 30-minute expiration
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
-        data=token_payload, expires_delta=access_token_expires
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
+    return {"access_token": access_token, "token_type": "bearer"}
 
-    # Return the token
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": user.id,
-        "email": user.email
-    }
-
-
-@router.post("/logout")
-def logout_user():
-    """
-    Logout user (currently a placeholder, as JWT tokens are stateless).
-
-    In a real implementation, this might add the token to a blacklist.
-    """
-    return {"message": "Logged out successfully"}
-
-
-@router.get("/me", response_model=UserRead)
-def read_users_me(current_user: Dict[str, Any] = Depends(user_service.get_current_user)) -> UserRead:
-    """
-    Get current user's information based on the JWT token.
-
-    Args:
-        current_user: User information extracted from the JWT token
-
-    Returns:
-        UserRead: Current user's information
-    """
-    # This endpoint would typically fetch the full user record from the database
-    # using the user_id from the token, but we'll return the information from the token for now
-    return UserRead(
-        id=current_user["user_id"],
-        email=current_user["email"],
-        is_active=True,
-        created_at=None,  # Would come from DB in a real implementation
-        updated_at=None   # Would come from DB in a real implementation
-    )
+@router.get("/users/me", response_model=UserRead)
+def read_users_me(current_user: UserRead = Depends(get_current_user)) -> UserRead:
+    return current_user
