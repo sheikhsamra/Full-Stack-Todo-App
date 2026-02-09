@@ -1,20 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/components/ui/input';
 import Button from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 
-const SigninForm = () => {
+function SigninFormContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get('return') || '/tasks';
   const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,8 +26,8 @@ const SigninForm = () => {
       if (!result.success) {
         setError(result.error || 'Invalid credentials');
       } else {
-        router.push(returnUrl);
-        router.refresh(); // Refresh to update the auth state in the layout
+        router.push('/tasks');
+        router.refresh();
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -86,13 +85,21 @@ const SigninForm = () => {
         </div>
 
         <div className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
             Sign up
           </Link>
         </div>
       </form>
     </div>
+  );
+}
+
+const SigninForm = () => {
+  return (
+    <Suspense fallback={<div className="max-w-md w-full space-y-8"><div className="text-center">Loading...</div></div>}>
+      <SigninFormContent />
+    </Suspense>
   );
 };
 

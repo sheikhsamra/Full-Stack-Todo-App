@@ -47,8 +47,8 @@ const TaskDetailPage = () => {
     }
   };
 
-  const handleUpdateTask = async (taskData: any) => {
-    if (!task || !user) return;
+  const handleUpdateTask = async (taskData: any): Promise<{ success: boolean; error?: string }> => {
+    if (!task || !user) return { success: false, error: 'Missing task or user' };
 
     try {
       const updatedTask = await updateTask(user.id as number, task.id, taskData);

@@ -33,7 +33,7 @@ export const useAuth = () => {
           // Verify token is still valid by getting user info
           const userInfo = await getCurrentUser();
           setUser({
-            id: userInfo.id,
+            id: userInfo.id || 0,
             email: userInfo.email,
             isAuthenticated: true,
           });
@@ -58,8 +58,8 @@ export const useAuth = () => {
     try {
       const response = await loginUser({ username: email, password });
       setUser({
-        id: response.user_id,
-        email: response.email,
+        id: response.user_id || 0,
+        email: response.email || email,
         isAuthenticated: true,
       });
       return { success: true, data: response };
@@ -81,13 +81,13 @@ export const useAuth = () => {
   const signUp = async (email: string, password: string, name?: string) => {
     try {
       const response = await registerUser({
-        name: name || email.split('@')[0], // Use part of email as name if not provided
+        name: name || email.split('@')[0],
         email,
         password
       });
       setUser({
-        id: response.user_id,
-        email: response.email,
+        id: response.user_id || 0,
+        email: response.email || email,
         isAuthenticated: true,
       });
       return { success: true, data: response };
