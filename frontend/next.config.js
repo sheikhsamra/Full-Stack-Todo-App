@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    typedRoutes: true,
-  },
+  output: 'standalone',
   images: {
-    domains: ['localhost', 'your-backend-domain.com'], // Add your backend domain here
+    domains: ['localhost', 'your-backend-domain.com'],
   },
 };
 
