@@ -54,7 +54,7 @@ export default function HomePage() {
               href="/signup" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
             >
-              Get Started - It's Free
+              Get Started - It&apos;s Free
             </Link>
             <Link 
               href="/signin" 

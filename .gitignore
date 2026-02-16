@@ -112,6 +112,10 @@ public/static/
 .next/server/middleware-react-loadable-manifest.json
 .next/server/navigation-react-loadable-manifest.json
 
+# Root level Node artifacts (monorepo - only frontend should have these)
+package-lock.json
+package.json
+
 # Environment variables
 .env*
 !.env.example

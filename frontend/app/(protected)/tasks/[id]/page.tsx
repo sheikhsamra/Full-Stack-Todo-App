@@ -8,8 +8,9 @@ import { getTaskById, updateTask, deleteTask, toggleTaskCompletion } from '@/lib
 import { useAuth } from '@/hooks/use-auth';
 
 const TaskDetailPage = () => {
-  const { id } = useParams();
-  const taskId = typeof id === 'string' ? parseInt(id, 10) : id[0] ? parseInt(id[0], 10) : NaN;
+  const params = useParams();
+  const id = params?.id;
+  const taskId = typeof id === 'string' ? parseInt(id, 10) : Array.isArray(id) && id[0] ? parseInt(id[0], 10) : NaN;
   const router = useRouter();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
