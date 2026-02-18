@@ -1,4 +1,14 @@
 {
+<<<<<<< HEAD
   "cleanUrls": true,
   "trailingSlash": false
 }
+=======
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}
+>>>>>>> dc5678c4666f6ecc60602e3c20fa726729f6cb1c
