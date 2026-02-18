@@ -1,0 +1,13 @@
+{
+  "name": "full-stack-web-application-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Root directory - use frontend or backend directories for development'",
+    "build": "echo 'Build from frontend or backend directories'"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}

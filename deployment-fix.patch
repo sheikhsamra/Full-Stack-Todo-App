@@ -1,0 +1,33 @@
+diff --git a/vercel.json b/vercel.json.deleted
+similarity index 100%
+rename from vercel.json
+rename to vercel.json.deleted
+diff --git a/frontend/vercel.json b/frontend/vercel.json
+new file mode 100644
+index 0000000..7ba3e5a
+--- /dev/null
++++ b/frontend/vercel.json
+@@ -0,0 +1,4 @@
++{
++  "cleanUrls": true,
++  "trailingSlash": false
++}
+diff --git a/package.root.json b/package.root.json
+new file mode 100644
+index 0000000..e48e6c1
+--- /dev/null
++++ b/package.root.json
+@@ -0,0 +1,13 @@
++{
++  "name": "full-stack-web-application-root",
++  "version": "1.0.0",
++  "private": true,
++  "scripts": {
++    "dev": "echo 'Root directory - use frontend or backend directories for development'",
++    "build": "echo 'Build from frontend or backend directories'"
++  },
++  "workspaces": [
++    "frontend",
++    "backend"
++  ]
++}

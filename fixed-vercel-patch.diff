@@ -1,0 +1,14 @@
+diff --git a/vercel.json b/vercel.json.deleted
+similarity index 100%
+rename from vercel.json
+rename to vercel.json.deleted
+diff --git a/frontend/vercel.json b/frontend/vercel.json
+new file mode 100644
+index 0000000..7ba3e5a
+--- /dev/null
++++ b/frontend/vercel.json
+@@ -0,0 +1,4 @@
++{
++  "cleanUrls": true,
++  "trailingSlash": false
++}
